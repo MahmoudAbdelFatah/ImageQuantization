@@ -26,6 +26,8 @@ namespace ImageQuantization
                 string OpenedFilePath = openFileDialog1.FileName;
                 ImageMatrix = ImageOperations.OpenImage(OpenedFilePath);
                 ImageOperations.DisplayImage(ImageMatrix, pictureBox1);
+
+    
             }
             txtWidth.Text = ImageOperations.GetWidth(ImageMatrix).ToString();
             txtHeight.Text = ImageOperations.GetHeight(ImageMatrix).ToString();
@@ -37,6 +39,17 @@ namespace ImageQuantization
             int maskSize = (int)nudMaskSize.Value ;
             ImageMatrix = ImageOperations.GaussianFilter1D(ImageMatrix, maskSize, sigma);
             ImageOperations.DisplayImage(ImageMatrix, pictureBox2);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (ImageMatrix != null)
+            {                 
+                int ClustersCount =(int) numericUpDown1.Value;
+                ImageMatrix = ImageOperations.Quantize(ImageMatrix, ClustersCount);
+                ImageOperations.DisplayImage(ImageMatrix, pictureBox2);
+
+            }
         }
 
        
