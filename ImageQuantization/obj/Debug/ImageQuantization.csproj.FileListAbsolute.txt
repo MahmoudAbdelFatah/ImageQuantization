@@ -22,11 +22,11 @@ E:\3rd Year\algorithms\project\Image Quantization Startup Code\[TEMPLATE] ImageQ
 E:\3rd Year\algorithms\project\Image Quantization Startup Code\[TEMPLATE] ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.MainForm.resources
 E:\3rd Year\algorithms\project\Image Quantization Startup Code\[TEMPLATE] ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.Properties.Resources.resources
 E:\3rd Year\algorithms\project\Image Quantization Startup Code\[TEMPLATE] ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.csproj.GenerateResource.Cache
-E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.exe
-E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.pdb
-E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.csprojResolveAssemblyReference.cache
 E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.MainForm.resources
 E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.Properties.Resources.resources
 E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.csproj.GenerateResource.Cache
 E:\Current Projects\ImageQuantization\ImageQuantization\bin\Debug\ImageQuantization.exe
 E:\Current Projects\ImageQuantization\ImageQuantization\bin\Debug\ImageQuantization.pdb
+E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.exe
+E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.pdb
+E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.csprojResolveAssemblyReference.cache

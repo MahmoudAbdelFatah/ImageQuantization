@@ -16,6 +16,8 @@ namespace ImageQuantization
         }
 
         RGBPixel[,] ImageMatrix;
+        RGBPixel[,] Result;
+        RGBPixel[,] ExpectedResult;
 
         private void btnOpen_Click(object sender, EventArgs e)
         {
@@ -25,9 +27,7 @@ namespace ImageQuantization
                 //Open the browsed image and display it
                 string OpenedFilePath = openFileDialog1.FileName;
                 ImageMatrix = ImageOperations.OpenImage(OpenedFilePath);
-                ImageOperations.DisplayImage(ImageMatrix, pictureBox1);
-
-    
+                ImageOperations.DisplayImage(ImageMatrix, pictureBox1);    
             }
             txtWidth.Text = ImageOperations.GetWidth(ImageMatrix).ToString();
             txtHeight.Text = ImageOperations.GetHeight(ImageMatrix).ToString();
@@ -41,16 +41,66 @@ namespace ImageQuantization
             ImageOperations.DisplayImage(ImageMatrix, pictureBox2);
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Quantize_click(object sender, EventArgs e)
         {
             if (ImageMatrix != null)
             {                 
                 int ClustersCount =(int) numericUpDown1.Value;
-                ImageMatrix = ImageOperations.Quantize(ImageMatrix, ClustersCount);
-                ImageOperations.DisplayImage(ImageMatrix, pictureBox2);
 
+                Result = ImageOperations.Quantize(ImageMatrix, ClustersCount);
+                ImageOperations.DisplayImage(Result, pictureBox2);
+
+                txtWidth.Text = ImageOperations.GetWidth(Result).ToString();
+                txtHeight.Text = ImageOperations.GetHeight(Result).ToString();
             }
         }
+
+        private void compare_click(object sender, EventArgs e)
+        {
+           
+            double wright = 0, wrong = 0;
+                        
+            for (int i = 0; i < ImageOperations.Height; i++)
+            {
+                for (int k = 0; k < ImageOperations.Width; k++)
+                {
+                    if (Result[i, k].CompareTo(ExpectedResult[i, k]) == 0)
+                    {
+                        wright++;
+                    }
+                    else
+                    {
+                        wrong++;
+                    }
+                }
+            }
+            MessageBox.Show("right = " + wright.ToString() + "\n Wrong = " + wrong.ToString() + "\n");
+
+        }
+
+        private void openTC_result_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                //Open the browsed image and display it
+                string OpenedFilePath = openFileDialog1.FileName;
+                ExpectedResult = ImageOperations.OpenImage(OpenedFilePath);
+                ImageOperations.DisplayImage(ExpectedResult, pictureBox3);                
+            }
+            //txtWidth.Text = ImageOperations.GetWidth(TC_OutPut).ToString();
+            //txtHeight.Text = ImageOperations.GetHeight(TC_OutPut).ToString();
+        }
+
+        private void CountColors_Click(object sender, EventArgs e)
+        {
+            int colorsCount = ImageOperations.CountDisincets(Result);
+            MessageBox.Show("the Result has " + colorsCount + " Colors");
+        }
+
+       
+
+       
 
        
        

@@ -52,6 +52,7 @@ namespace ImageQuantization
         public double weight;
         public RGBPixel Color;
         public int ClusterID;
+        public int ChildsCount;
 
         public static int BaseClusterID = 1;
 
@@ -67,6 +68,7 @@ namespace ImageQuantization
             this.weight = 0;
             this.Color = rgb;
             this.ClusterID = 0;
+            ChildsCount=0;
         }
 
         public Vertex(double w, RGBPixel rgb)
@@ -74,22 +76,36 @@ namespace ImageQuantization
             this.weight = w;
             this.Color = rgb;
             this.ClusterID = 0;
+            ChildsCount=0;
         }
         public Vertex(double w, RGBPixel rgb, int ClusterID)
         {
             this.weight = w;
             this.Color = rgb;
             this.ClusterID = ClusterID;
+            ChildsCount=0;
         }
+        public Vertex(double w, RGBPixel rgb, int ClusterID,int ChildsCount)
+        {
+            this.weight = w;
+            this.Color = rgb;
+            this.ClusterID = ClusterID;
+            this.ChildsCount=ChildsCount;
+        }
+
 
         public void SetWeight(double Weight)
         {
-            this = new Vertex(Weight, this.Color, this.ClusterID);
+            this = new Vertex(Weight, this.Color, this.ClusterID,this.ChildsCount);
             //this.weight = Weight;
+        }
+        public double GetWeight()
+        {
+            return weight;
         }
         public void TerminateDistination()
         {
-            this = new Vertex(0, this.Color, this.ClusterID);
+            this = new Vertex(0, this.Color, this.ClusterID,this.ChildsCount);
             //this.weight = 0;
         }
         public bool hasDistination()
@@ -98,10 +114,13 @@ namespace ImageQuantization
         }
         public int AssignNew_ClusterID()
         {
-            this = new Vertex(this.weight, this.Color, BaseClusterID);
+            this = new Vertex(this.weight, this.Color, BaseClusterID,this.ChildsCount);
             //ClusterID = BaseClusterID;
             BaseClusterID++;
             return ClusterID;
+        }
+        public void SetChildsCount(int ChildsCount){
+            this = new Vertex(weight,Color,ClusterID,ChildsCount);
         }
 
         public static void ResetBaseID()
@@ -119,33 +138,37 @@ namespace ImageQuantization
         }
         public void SetClusterID(int CID)
         {
-            this = new Vertex(this.weight, this.Color, CID);
+            this = new Vertex(this.weight, this.Color, CID,this.ChildsCount);
             //this.ClusterID = CID;
 
         }
         public String ToString()
         {
-            return this.Color.red + "," + Color.green + "," + Color.blue + "\t  w = " + weight.ToString() + "\t ID = " + ClusterID;
+            return this.Color.red + "," + Color.green + "," + Color.blue + "\t  w = " + weight.ToString() + "\t ID = " + ClusterID + "\t ch ="+ChildsCount;
         }
 
 
         // to solv the List of Struct Problem
         public static Vertex SetWeight(double weight, Vertex v)
         {
-            return new Vertex(weight, v.Color, v.ClusterID);
+            return new Vertex(weight, v.Color, v.ClusterID,v.ChildsCount);
         }
         public static Vertex SetClusterID(int CID, Vertex v)
         {
-            return new Vertex(v.weight, v.Color, CID);
+            return new Vertex(v.weight, v.Color, CID,v.ChildsCount);
+        }
+        public static Vertex SetChildsCount(int ChildsCount, Vertex v)
+        {
+            return new Vertex(v.weight,v.Color,v.ClusterID,ChildsCount);
         }
 
     }
 
     public class Cluster
     {
-        public int ClusterID;
-        public int red, green, blue;
-        public int Count;
+        public double ClusterID;
+        public double red, green, blue;
+        public double Count;
 
         private static int BaseID = 1;
         public Cluster()
@@ -157,7 +180,13 @@ namespace ImageQuantization
 
         public RGBPixel GetAVG()
         {
-            return new RGBPixel((byte)(red / Count), (byte)(green / Count), (byte)(blue / Count));
+            byte r, g, b;
+         
+            r = (byte)(Math.Ceiling((double)(red / Count)));
+            g = (byte)(Math.Ceiling((double)(green / Count)));
+            b = (byte)(Math.Ceiling((double)(blue / Count)));
+
+            return new RGBPixel(r, g, b);
         }
     }
 
@@ -180,6 +209,7 @@ namespace ImageQuantization
         public static Vertex[, ,] mst3D;
 
         public static List<Vertex> distinct;
+        public static List<Vertex> distinct2;
 
 
         public static System.DateTime t1;
@@ -187,6 +217,7 @@ namespace ImageQuantization
         public static System.DateTime t3;
         public static System.DateTime t4;
         public static String Out = "";
+        public static String ClusteringState = "";
         public static int Height;
         public static int Width;
 
@@ -257,37 +288,73 @@ namespace ImageQuantization
 
         }
 
-        public static RGBPixel[,] Quantize(RGBPixel[,] img ,int ClustersCount)
+        public static RGBPixel[,] Quantize(RGBPixel[,] img, int ClustersCount)
         {
-            ConstructMST(img);
-            Cluster[] Clusters = Cluster(ClustersCount);
+            Out = "";
+            t1 = t2 = t3 = t4 = new System.DateTime();
+            t1 = DateTime.Now;
+                ConstructMST(img);
+            t2 = DateTime.Now;
+            Out += "Distinct Colors = " + distinct.Count + " Color" + Environment.NewLine;
+            Out += "MST min Cost = " + Get_MST_MinCost().ToString() + Environment.NewLine;
+            Out += "Constructing MST = " + (t2 - t1).ToString() + Environment.NewLine;
+
+            RGBPixel[,] rImg = new RGBPixel[Height, Width];
+
+            t3 = DateTime.Now;
+                Cluster[] Clusters = Cluster(ClustersCount);
+            t4 = DateTime.Now;
+            Out += "\t Cluster = " + (t4-t3).ToString() + Environment.NewLine;
+            Out += " Total Time             = " + (t4 - t1).ToString() + Environment.NewLine;
+
+            MessageBox.Show(Out);
             if (Clusters != null)
             {
-                for (int i = 0; i < Width; i++)
+                for (int i = 0; i < Height; i++)
                 {
-                    for (int k = 0; k < Height; k++)
+                    for (int k = 0; k < Width; k++)
                     {
-                        // mst3D [r,g,b].CusterID 
-                        // Clusters[ClusterID-1] . AVG 
                         int r, g, b;
                         r = img[i, k].red;
                         g = img[i, k].green;
                         b = img[i, k].blue;
-                        img[i, k] = Clusters[mst3D[r, g, b].ClusterID - 1].GetAVG();
+                        rImg[i, k] = Clusters[mst3D[r, g, b].ClusterID - 1].GetAVG();
                     }
                 }
-            }          
+                return rImg;
+            }
             return img;
         }
 
+        public static int CountDisincets(RGBPixel[,] img)
+        {
+                        
+            Boolean[, ,] distinctColors = new Boolean[256, 256, 256];
+
+            int Count = 0;
+            for (int i = 0; i < Height; i++)
+            {
+                for (int j = 0; j < Width; j++)
+                {
+                    if (!distinctColors[img[i, j].blue, img[i, j].green, img[i, j].red])
+                    {                        
+                        distinctColors[img[i, j].blue, img[i, j].green, img[i, j].red] = true;
+                        Count++;
+                    }
+                }
+            }
+
+            return Count;
+
+        }
 
         public static void ConstructMST(RGBPixel[,] img)
         {
 
             mst3D = new Vertex[256, 256, 256];
-            t1 = t2 = t3 = t4 = DateTime.Now;
 
             distinct = new List<Vertex>();
+            distinct2 = new List<Vertex>();
 
             Boolean[, ,] distinctColors = new Boolean[256, 256, 256];
 
@@ -299,6 +366,10 @@ namespace ImageQuantization
                     if (!distinctColors[img[i, j].blue, img[i, j].green, img[i, j].red])
                     {
                         distinct.Add(new Vertex(new RGBPixel(img[i, j].red, img[i, j].green, img[i, j].blue)));
+                        
+                        //mannas try1 
+                        distinct2.Add(new Vertex(new RGBPixel(img[i, j].red, img[i, j].green, img[i, j].blue)));
+
                         distinctColors[img[i, j].blue, img[i, j].green, img[i, j].red] = true;
                         Count++;
                     }
@@ -387,12 +458,23 @@ namespace ImageQuantization
 
             }
 
+ 
 
-            t2 = DateTime.Now;
-            //Check the Out in MessageBox
-            Out += "    MST   \t" + (t2 - t1).ToString() + "\n";
-                         
         }
+
+        public static double Get_MST_MinCost()
+        {
+            double MinCost = 0;
+            for(int r=0;r<256 ; r++)
+                for(int g=0;g<256;g++)
+                    for (int b = 0; b < 256; b++)
+                    {
+                        MinCost += mst3D[r, g, b].GetWeight();
+                    }
+            return MinCost;
+        }
+
+
 
 
         // Assignes for Each Color in mst3D a ClusterID , Calculate the AVG Color for each Cluster
@@ -404,93 +486,104 @@ namespace ImageQuantization
             //the clusters Count Can NOT be greater than the Colors Count or == 0
             if (ClusersCount <= 0 || ClusersCount >= distinct.Count)
                 return null;
-
+            ClusteringState = "";
 
             //// get the 3D vertices into List
             //distinct contain all the colors
+         
 
-            t3 = DateTime.Now;
-
-            ////cutting max # weights
-
-            //the cuts = ClusterCount - 1
-            for (int i = 0; i < ClusersCount - 1; i++)                         //--- O(K)*O(D) = O(K*D)
-            {
-                //find the max weight
-                double maxWeight = -1;
-                int maxWeightIndex = -1;
-                for (int k = 0; k < distinct.Count; k++)                    //--- O(D)*O(1) = O(D)
-                {
-                    // MST has only one Vertixe as a destination but NOT a Source to any other
-                    if (!distinct[k].hasDistination() && !distinct[k].hasClusterID())                    //--- O(1)
+                //initialy make Every Vertex Knows How many Childs it have !
+                    for (int k = 0; k < distinct.Count; k++)                   
                     {
-                        //Initiate it in the mst3D AND assign it with a New ClusetID 
-                        mst3D[distinct[k].Color.red, distinct[k].Color.green, distinct[k].Color.blue] = new Vertex(0, new RGBPixel());//--- O(1)
-
-                        int cID = mst3D[distinct[k].Color.red, distinct[k].Color.green, distinct[k].Color.blue].AssignNew_ClusterID();//--- O(1)
-
-                        distinct[k] = Vertex.SetClusterID(cID, distinct[k]);
-
+                        Vertex lsV = distinct[k];
+                        Vertex mst3dV = mst3D[lsV.Color.red, lsV.Color.green, lsV.Color.blue];                 
+                        if (!mst3dV.hasDistination() && !mst3dV.hasClusterID())     
+                        {   // the MST has one Node that Has No Destination So it Assign it to a New Cluster ->i.e. the 1st Cluster
+                            mst3D[lsV.Color.red, lsV.Color.green, lsV.Color.blue].AssignNew_ClusterID();
+                        }
+                        InitChildsCount(lsV.Color.red, lsV.Color.green, lsV.Color.blue,true);
                     }
-                    else if (distinct[k].weight > maxWeight)                //--- O(1)
+
+
+                ////cutting max # weights
+                //the cuts = ClusterCount - 1               
+                    for (int i = 0; i < ClusersCount - 1; i++)                         
                     {
-                        maxWeight = distinct[k].weight;                     //--- O(1)
-                        maxWeightIndex = k;                                 //--- O(1)
+                        //find the max weight
+                        double maxWeight = -1;
+                        int maxWeightIndex = -1;
+                        int maxWeight_ChildsCount = -1;
+                   
+                        for (int k = 0; k < distinct.Count; k++)                     
+                        {
+                            Vertex lsV = distinct[k];                                            
+                            if (lsV.weight > maxWeight)     
+                            {
+                                maxWeight = lsV.weight;                      
+                                maxWeightIndex = k;                                 
+                                maxWeight_ChildsCount = mst3D[lsV.Color.red, lsV.Color.green, lsV.Color.blue].ChildsCount;
+                            }
+                            else if(lsV.weight == maxWeight){ // if they have the same weight SO cut what have more childs
+                                if (mst3D[lsV.Color.red, lsV.Color.green, lsV.Color.blue].ChildsCount > maxWeight_ChildsCount )
+                                {
+                                    maxWeight = lsV.weight;                      
+                                    maxWeightIndex = k;                                 
+                                    maxWeight_ChildsCount = mst3D[lsV.Color.red, lsV.Color.green, lsV.Color.blue].ChildsCount;
+                                }
+                   
+                            }
+                        }
+                  
+                        distinct[maxWeightIndex] = Vertex.SetWeight(-1, distinct[maxWeightIndex]);               
+
+                        int rr, gg, bb;
+                            rr = distinct[maxWeightIndex].Color.red;                     //--- O(1)
+                            gg = distinct[maxWeightIndex].Color.green;                   //--- O(1)
+                            bb = distinct[maxWeightIndex].Color.blue;                    //--- O(1)
+                        //make it has no destination
+
+                        CutBranch(rr, gg, bb); //cuts it's branch from the destination node
+                        mst3D[rr, gg, bb].TerminateDistination();                      //--- O(1)                    
+                        if (!mst3D[rr, gg, bb].hasClusterID())
+                        {
+                            mst3D[rr, gg, bb].AssignNew_ClusterID();
+                        }                     
                     }
-                }
-                distinct[maxWeightIndex] = Vertex.SetWeight(-1, distinct[maxWeightIndex]);              //--- O(1)
-
-                int r, g, b;
-                r = distinct[maxWeightIndex].Color.red;                     //--- O(1)
-                g = distinct[maxWeightIndex].Color.green;                   //--- O(1)
-                b = distinct[maxWeightIndex].Color.blue;                    //--- O(1)
-                //make it has no destination
-                mst3D[r, g, b].TerminateDistination();                      //--- O(1)
-            }
 
 
-            //// Accumelate each Cluster Colors, Calculate each Cluster AVG
-            Cluster[] Clusters = new Cluster[Math.Max(1, ClusersCount)];
-            for (int i = 0; i < Clusters.GetLength(0); i++)
-                Clusters[i] = new Cluster();
+                //// Accumelate each Cluster Colors, Accumelate each Cluster AVG
+                    Cluster[] Clusters = new Cluster[Math.Max(1, ClusersCount)];
+                    for (int i = 0; i < Clusters.GetLength(0); i++)
+                        Clusters[i] = new Cluster();
+                    //assign the Cluster ID :- loopes throught the distinct(s) assigning  ClusterIDs
+                    for (int i = 0; i < distinct.Count; i++)  //--- O(D)
+                    {
+                        //Assign
+                            int r, g, b;
+                                r = distinct[i].Color.red;
+                                g = distinct[i].Color.green;
+                                b = distinct[i].Color.blue;
 
+                            int C_ID = AssignClusterID(r, g, b);
+                            distinct[i] = Vertex.SetClusterID(C_ID, distinct[i]);
 
-            //assign the Cluster ID :- loopes throught the distinct(s) assigning  ClusterIDs
-            for (int i = 0; i < distinct.Count; i++)  //--- O(D)
-            {
-                //Assign
-                int r, g, b;
-                r = distinct[i].Color.red;
-                g = distinct[i].Color.green;
-                b = distinct[i].Color.blue;
-                int C_ID = AssignClusterID(r, g, b);
-                distinct[i] = Vertex.SetClusterID(C_ID, distinct[i]);
+                        //Accumelate the AVG Color of Each Cluster
+                            Clusters[C_ID - 1].red += r;
+                            Clusters[C_ID - 1].green += g;
+                            Clusters[C_ID - 1].blue += b;
+                            Clusters[C_ID - 1].Count++;
+                    }
 
-                //to calculate the AVG Color of Each Cluster
-                Clusters[C_ID - 1].red += r;
-                Clusters[C_ID - 1].green += g;
-                Clusters[C_ID - 1].blue += b;
-                Clusters[C_ID - 1].Count++;
-            }
-
-            t4 = DateTime.Now;
-
-
-            ////Check for Clustering
-            Out += "Clustering\t" + (t4 - t3).ToString() + "\n" + Environment.NewLine;
-            Out += "Tootal    \t" + (t4 - t1).ToString() + "\n" + Environment.NewLine;
-
-            Out += "Clusters Count = " + (ClusersCount).ToString() + "\n\n" + Environment.NewLine;
-
-            //for (int i = 0; i < Clusters.GetLength(0) ; i++)
+            //Out += "distincet colors = " + distinct.Count + Environment.NewLine;
+            //for (int i = 0; i < Clusters.GetLength(0); i++)
             //{
+            //    RGBPixel AVG = Clusters[i].GetAVG();
             //    Out += "Cluster # " + (i + 1).ToString() + '\n' + Environment.NewLine;
             //    Out += "SUM(red) = " + Clusters[i].red + " SUM(green) = " + Clusters[i].green + " Sum(blue) = " + Clusters[i].blue + "\n" + Environment.NewLine;
             //    Out += "Cout = " + Clusters[i].Count + "\n AVG = " +
-            //        Clusters[i].red / Clusters[i].Count + ',' +
-            //        Clusters[i].green / Clusters[i].Count + ',' +
-            //        Clusters[i].blue / Clusters[i].Count + "\n\n" + Environment.NewLine;
-
+            //        AVG.red + ',' +
+            //        AVG.green + ',' +
+            //        AVG.blue + "\n\n" + Environment.NewLine;
             //}
 
 
@@ -506,12 +599,12 @@ namespace ImageQuantization
             //// This text is always added, making the file longer over time
             //// if it is not deleted.
             //File.AppendAllText(path, Out);
+            //Out = "";
 
-
-            MessageBox.Show(Out);
-            //clear
+            
+            ////clear
             Vertex.ResetBaseID();
-            Out = "";
+            
 
             return Clusters;
         }
@@ -528,20 +621,87 @@ namespace ImageQuantization
             else
             {
                 if (!mst3D[r, g, b].hasDistination())
-                {
+                {                    
                     return mst3D[r, g, b].AssignNew_ClusterID(); //--- O(1)
                 }
                 else
                 {
                     RGBPixel distination = mst3D[r, g, b].Color;
-                    AssignClusterID((byte)distination.red, (byte)distination.green, (byte)distination.blue);
-                    int distClusterID = mst3D[distination.red, distination.green, distination.blue].getClusterID();
-                    mst3D[r, g, b].SetClusterID(distClusterID);
+                    int distClusterID = AssignClusterID(distination.red, distination.green, distination.blue);
+                    
+                    //mst3D[r, g, b].SetClusterID(distClusterID);
+                    mst3D[r, g, b] = Vertex.SetClusterID(distClusterID, mst3D[r, g, b]);
 
                     return distClusterID;
                 }
             }
         }
+
+        public static void InitChildsCount(int r, int g, int b,bool is_1stNode)
+        {
+            if (!mst3D[r, g, b].hasDistination() && !is_1stNode)
+            {
+                mst3D[r, g, b].SetChildsCount(mst3D[r, g, b].ChildsCount + 1);
+                return;
+            }
+            else
+            {
+                if (!is_1stNode)
+                {
+                    mst3D[r, g, b].SetChildsCount(mst3D[r, g, b].ChildsCount + 1);
+                }
+                InitChildsCount(mst3D[r, g, b].Color.red, mst3D[r, g, b].Color.green, mst3D[r, g, b].Color.blue, false);
+            }
+        }
+
+
+        /// <summary>
+        ///     subtract the Childs Count from all the parents
+        /// </summary>
+        /// <param name="r">the Edge wanted to be cutten Src red</param>
+        /// <param name="g">the Edge wanted to be cutten Src green</param>
+        /// <param name="b">the Edge wanted to be cutten Src blue</param>
+        /// <returns>void</returns>
+        public static void CutBranch(int r, int g, int b )
+        {
+            Vertex BHead = mst3D[r, g, b];
+            CutBranch_aux(BHead.Color.red, BHead.Color.green, BHead.Color.blue, BHead.ChildsCount+1 );
+        }
+        /// <summary>
+        ///    Use CutBranch() instead
+        ///    DO NOT Call from any where BUT CutBranch()
+        /// </summary>
+        public static void CutBranch_aux(int p_r, int p_g, int p_b , int ChildsCount)
+        {
+            
+            if (!mst3D[p_r, p_g, p_b].hasDistination() )
+            {
+                mst3D[p_r, p_g, p_b].SetChildsCount(mst3D[p_r, p_g, p_b].ChildsCount - ChildsCount);
+                return;
+            }
+            else
+            {                
+                mst3D[p_r, p_g, p_b].SetChildsCount(mst3D[p_r, p_g, p_b].ChildsCount - ChildsCount);
+                CutBranch_aux(mst3D[p_r, p_g, p_b].Color.red, mst3D[p_r, p_g, p_b].Color.green, mst3D[p_r, p_g, p_b].Color.blue, ChildsCount);
+            }            
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         /// <summary>
@@ -558,7 +718,7 @@ namespace ImageQuantization
             double rgb = (rgb1.red - rgb2.red) * (rgb1.red - rgb2.red) +
                                    (rgb1.green - rgb2.green) * (rgb1.green - rgb2.green) +
                                    (rgb1.blue - rgb2.blue) * (rgb1.blue - rgb2.blue);
-            return rgb;
+            return Math.Sqrt(rgb);
         }
         public static void swap(int p1, int p2)
         {
