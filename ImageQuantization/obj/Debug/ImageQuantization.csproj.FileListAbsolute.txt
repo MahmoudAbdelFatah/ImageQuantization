@@ -29,4 +29,3 @@ E:\Current Projects\ImageQuantization\ImageQuantization\bin\Debug\ImageQuantizat
 E:\Current Projects\ImageQuantization\ImageQuantization\bin\Debug\ImageQuantization.pdb
 E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.exe
 E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.pdb
-E:\Current Projects\ImageQuantization\ImageQuantization\obj\Debug\ImageQuantization.csprojResolveAssemblyReference.cache

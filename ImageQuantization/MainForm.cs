@@ -98,6 +98,16 @@ namespace ImageQuantization
             MessageBox.Show("the Result has " + colorsCount + " Colors");
         }
 
+         
+
+        private void numericUpDown1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == Convert.ToChar( Keys.Enter))
+            {
+                Quantize_click(sender, e);
+            }
+        }
+
        
 
        
